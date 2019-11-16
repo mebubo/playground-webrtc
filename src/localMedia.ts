@@ -3,8 +3,17 @@ import { WithId } from "./utils"
 type Listener<A> = (values: Array<A>) => void
 type Listener2<A> = (values: Array<A>, values2: Array<A>) => void
 
-const x = { label: "Screen", deviceId: "screen", kind: "videoinput", groupId: "screen" }
-const displayMediaDevice: MediaDeviceInfo = { ...x, toJSON: () => x } as MediaDeviceInfo
+class DisplayMediaDeviceInfo implements MediaDeviceInfo {
+ label = "Screen"
+ deviceId = "screen"
+ kind = "videoinput" as MediaDeviceKind
+ groupId = "screen"
+ toJSON() {
+   return this
+ }
+}
+
+const DISPLAY_MEDIA_DEVICE = new DisplayMediaDeviceInfo
 
 export class LocalMediaDevices {
   mediaDeviceListeners: Array<Listener<MediaDeviceInfo>> = []
@@ -17,7 +26,7 @@ export class LocalMediaDevices {
   }
 
   getMediaDevices() {
-    return navigator.mediaDevices.enumerateDevices().then(d => [...d, displayMediaDevice])
+    return navigator.mediaDevices.enumerateDevices().then(d => [...d, DISPLAY_MEDIA_DEVICE])
   }
 
   subscribe(listner: (mediaDevices: Array<MediaDeviceInfo>) => void) {
@@ -56,7 +65,7 @@ export class LocalMediaStreams {
   }
 
   createStream(deviceId: string): Promise<MediaStream> {
-    if (deviceId === displayMediaDevice.deviceId) {
+    if (deviceId === DISPLAY_MEDIA_DEVICE.deviceId) {
       return (navigator.mediaDevices as any).getDisplayMedia()
     } else {
       return navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } })
