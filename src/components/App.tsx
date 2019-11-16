@@ -1,13 +1,6 @@
 import React from 'react'
-
-type AppState = {
-    mediaDevices: Array<MediaDeviceInfo>
-    mediaStreams: Array<WithId<MediaStream>>
-}
-
-class WithId<A> {
-    constructor(public readonly value: A, public readonly id: string) { }
-}
+import { WithId } from '../utils'
+import { LocalMedia } from '../localMedia'
 
 type VideoDeviceInfo = {
     label: string
@@ -16,14 +9,19 @@ type VideoDeviceInfo = {
 
 type VideoDevicesProps = {
     devices: Array<VideoDeviceInfo>
+    activeStreamDeviceIds: Array<string>
     cb: (deviceId: string, isOn: boolean) => void
 }
 
-const VideoDevices: React.FunctionComponent<VideoDevicesProps> = ({ devices, cb }) => {
+const VideoDevices: React.FunctionComponent<VideoDevicesProps> = ({ devices, cb, activeStreamDeviceIds }) => {
     return <ul>
-        {devices.map(({ label, deviceId }, i) => {
-            return <li key={i}>
-                <input type="checkbox" name="" id="" onChange={e => cb(deviceId, (e.target as any).checked)} /> {label}
+        {devices.map(({ label, deviceId }) => {
+            return <li key={deviceId}>
+                <input
+                    type="checkbox"
+                    checked={activeStreamDeviceIds.includes(deviceId)}
+                    name="" 
+                    onChange={e => cb(deviceId, (e.target as any).checked)} /> {label}
             </li>
         })}
     </ul>
@@ -40,14 +38,14 @@ const DisplayMedia: React.FunctionComponent<VideoDevicesProps> = ({ devices, cb 
 }
 
 type VideoStreamsProps = {
-    streams: Array<MediaStream>
+    streams: Array<WithId<MediaStream>>
 }
 
 const VideoStreams: React.FunctionComponent<VideoStreamsProps> = ({ streams }) => {
     return <ul>
-        {streams.map((s, i) => {
-            return <li key={i}>
-                <Video stream={s} />
+        {streams.map(s => {
+            return <li key={s.id}>
+                <Video stream={s.value} />
             </li>
         })}
     </ul>
@@ -84,48 +82,48 @@ export class Video extends React.Component<VideoProps, {}> {
     }
 }
 
+type AppState = {
+    mediaDevices: Array<MediaDeviceInfo>
+    mediaStreams: Array<WithId<MediaStream>>
+}
+
 const initialState: AppState = {
     mediaDevices: [],
     mediaStreams: []
 }
 
-export class App extends React.Component<{}, AppState> {
-    constructor(props: {}) {
+type AppProps = { localMedia: LocalMedia }
+
+export class App extends React.Component<AppProps, AppState> {
+    localMedia: LocalMedia
+    subscriptions: Array<() => void> = []
+    constructor(props: AppProps) {
         super(props)
         this.state = initialState
-        this.queryMediaDevices()
-        navigator.mediaDevices.ondevicechange = () => this.queryMediaDevices()
+        this.localMedia = props.localMedia
     }
-    queryMediaDevices() {
-        const devices = navigator.mediaDevices.enumerateDevices()
-        devices.then(ds => this.setState({ mediaDevices: ds }))
+
+    componentDidMount() {
+        this.subscriptions.push(this.localMedia.subscribeToMediaDevices(mediaDevices => this.setState({ mediaDevices })))
+        this.subscriptions.push(this.localMedia.subscribeToMediaStreams(mediaStreams => this.setState({ mediaStreams })))
     }
-    toggleMediaStream(deviceId: string, isOn: boolean, createStream: (deviceId: string) => Promise<MediaStream>): Promise<void> {
-        if (isOn) {
-            const stream = createStream(deviceId)
-            return stream.then(s => this.setState({ mediaStreams: [...this.state.mediaStreams, new WithId(s, deviceId)] }))
-        } else {
-            const streamsToStop = this.state.mediaStreams.filter(s => s.id === deviceId)
-            streamsToStop.flatMap(s => s.value.getTracks()).forEach(t => t.stop())
-            const remainingStreams = this.state.mediaStreams.filter(s => s.id !== deviceId)
-            return Promise.resolve(this.setState({ mediaStreams: remainingStreams }))
-        }
+
+    componentWillUnmount() {
+        this.subscriptions.forEach(unsubscribe => unsubscribe())
     }
-    toggleWebcam(deviceId: string, isOn: boolean): Promise<void> {
-        return this.toggleMediaStream(deviceId, isOn, deviceId => navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } }))
-    }
-    toggleDisplayMedia(deviceId: string, isOn: boolean) {
-        return this.toggleMediaStream(deviceId, isOn, deviceId => (navigator.mediaDevices as any).getDisplayMedia())
-    }
+
     render() {
         return <div>
             Hello
             <ul>
                 {this.state.mediaDevices.map((d, i) => <li key={i}>{d.toString()}: {JSON.stringify(d)}</li>)}
             </ul>
-            <VideoDevices devices={this.state.mediaDevices.filter(d => d.kind === 'videoinput')} cb={(deviceId, isOn) => this.toggleWebcam(deviceId, isOn)} />
-            <VideoDevices devices={[{label: "Screen", deviceId: "Screen"}]} cb={(deviceId, isOn) => this.toggleDisplayMedia(deviceId, isOn)} />
-            <VideoStreams streams={this.state.mediaStreams.map(s => s.value)} />
+            <VideoDevices
+                devices={this.state.mediaDevices.filter(d => d.kind === 'videoinput')}
+                cb={(deviceId, isOn) => this.localMedia.toggleMediaStream(deviceId, isOn)}
+                activeStreamDeviceIds={this.state.mediaStreams.map(s => s.id)}
+            />
+            <VideoStreams streams={this.state.mediaStreams} />
         </div>
     }
 }
