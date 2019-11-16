@@ -20,7 +20,7 @@ const VideoDevices: React.FunctionComponent<VideoDevicesProps> = ({ devices, cb,
                 <input
                     type="checkbox"
                     checked={activeStreamDeviceIds.includes(deviceId)}
-                    name="" 
+                    name=""
                     onChange={e => cb(deviceId, (e.target as any).checked)} /> {label}
             </li>
         })}
@@ -41,7 +41,7 @@ type VideoStreamsProps = {
     streams: Array<WithId<MediaStream>>
 }
 
-const VideoStreams: React.FunctionComponent<VideoStreamsProps> = ({ streams }) => {
+export const VideoStreams: React.FunctionComponent<VideoStreamsProps> = ({ streams }) => {
     return <ul>
         {streams.map(s => {
             return <li key={s.id}>
@@ -105,7 +105,7 @@ export class App extends React.Component<AppProps, AppState> {
 
     componentDidMount() {
         this.subscriptions.push(this.localMedia.subscribeToMediaDevices(mediaDevices => this.setState({ mediaDevices })))
-        this.subscriptions.push(this.localMedia.subscribeToMediaStreams(mediaStreams => this.setState({ mediaStreams })))
+        this.subscriptions.push(this.localMedia.subscribeToMediaStreams((mediaStreams, _) => this.setState({ mediaStreams })))
     }
 
     componentWillUnmount() {

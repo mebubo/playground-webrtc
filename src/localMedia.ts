@@ -1,14 +1,15 @@
 import { WithId } from "./utils"
 
 type Listener<A> = (values: Array<A>) => void
+type Listener2<A> = (values: Array<A>, values2: Array<A>) => void
 
-const x = { label: "Screen", deviceId: "Screen", kind: "videoinput", groupId: "screen"}
+const x = { label: "Screen", deviceId: "Screen", kind: "videoinput", groupId: "screen" }
 const displayMediaDevice: MediaDeviceInfo = { ...x, toJSON: () => x } as MediaDeviceInfo
 
 export class LocalMedia {
   mediaStreams: Array<WithId<MediaStream>> = []
   mediaDeviceListeners: Array<Listener<MediaDeviceInfo>> = []
-  mediaStreamListeners: Array<Listener<WithId<MediaStream>>> = []
+  mediaStreamListeners: Array<Listener2<WithId<MediaStream>>> = []
 
   constructor() {
     navigator.mediaDevices.ondevicechange = () => {
@@ -17,11 +18,17 @@ export class LocalMedia {
     }
   }
 
-  setState({ mediaStreams }: { mediaStreams?: Array<WithId<MediaStream>> }) {
-    if (mediaStreams) {
-      this.mediaStreams = mediaStreams
-      this.mediaStreamListeners.forEach(listener => listener(this.mediaStreams))
-    }
+  addStream(stream: WithId<MediaStream>) {
+    this.mediaStreams = [...this.mediaStreams, stream]
+    this.mediaStreamListeners.forEach(listener => listener(this.mediaStreams, []))
+  }
+
+  removeStreams(deviceId: string) {
+    const streamsToStop = this.mediaStreams.filter(s => s.id === deviceId)
+    streamsToStop.flatMap(s => s.value.getTracks()).forEach(t => t.stop())
+    const remainingStreams = this.mediaStreams.filter(s => s.id !== deviceId)
+    this.mediaStreams = remainingStreams
+    this.mediaStreamListeners.forEach(listener => listener(this.mediaStreams, streamsToStop))
   }
 
   getMediaDevices() {
@@ -36,9 +43,9 @@ export class LocalMedia {
     }
   }
 
-  subscribeToMediaStreams(listner: (mediaStreams: Array<WithId<MediaStream>>) => void) {
+  subscribeToMediaStreams(listner: Listener2<WithId<MediaStream>>) {
     this.mediaStreamListeners.push(listner)
-    listner(this.mediaStreams)
+    listner(this.mediaStreams, [])
     return () => {
       this.mediaStreamListeners = this.mediaStreamListeners.filter(l => l !== listner)
     }
@@ -55,12 +62,9 @@ export class LocalMedia {
   toggleMediaStream(deviceId: string, isOn: boolean, ): Promise<void> {
     if (isOn) {
       const stream = this.createStream(deviceId)
-      return stream.then(s => this.setState({ mediaStreams: [...this.mediaStreams, new WithId(s, deviceId)] }))
+      return stream.then(s => this.addStream(new WithId(s, deviceId)))
     } else {
-      const streamsToStop = this.mediaStreams.filter(s => s.id === deviceId)
-      streamsToStop.flatMap(s => s.value.getTracks()).forEach(t => t.stop())
-      const remainingStreams = this.mediaStreams.filter(s => s.id !== deviceId)
-      return Promise.resolve(this.setState({ mediaStreams: remainingStreams }))
+      return Promise.resolve(this.removeStreams(deviceId))
     }
   }
 }
