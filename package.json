@@ -1,0 +1,27 @@
+{
+  "name": "playground-webrtc",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "webpack-bundle": "mkdir -p deploy && cp static/index* deploy/ && webpack",
+    "webpack-watch": "webpack -w",
+    "webpack-serve": "webpack-dev-server",
+    "deploy": "npm run webpack-bundle && surge public"
+  },
+  "author": "",
+  "dependencies": {
+    "react": "^16.9.0",
+    "react-dom": "^16.9.0"
+  },
+  "devDependencies": {
+    "@types/react": "^16.9.2",
+    "@types/react-dom": "^16.9.0",
+    "source-map-loader": "^0.2.4",
+    "ts-loader": "^6.1.0",
+    "typescript": "^3.7.2",
+    "webpack": "^4.40.2",
+    "webpack-cli": "^3.3.8",
+    "webpack-dev-server": "^3.8.0",
+    "surge": "^0.21.3"
+  }
+}
