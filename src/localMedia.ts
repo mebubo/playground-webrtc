@@ -64,20 +64,22 @@ export class LocalMediaStreams {
     }
   }
 
-  createStream(deviceId: string): Promise<MediaStream> {
-    if (deviceId === DISPLAY_MEDIA_DEVICE.deviceId) {
+  createStream(device: MediaDeviceInfo): Promise<MediaStream> {
+    if (device.deviceId === DISPLAY_MEDIA_DEVICE.deviceId) {
       return (navigator.mediaDevices as any).getDisplayMedia()
+    } else if (device.kind === "videoinput") {
+      return navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: device.deviceId } } })
     } else {
-      return navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } })
+      return navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: device.deviceId } } })
     }
   }
 
-  toggleMediaStream(deviceId: string, isOn: boolean, ): Promise<void> {
+  toggleMediaStream(device: MediaDeviceInfo, isOn: boolean): Promise<void> {
     if (isOn) {
-      const stream = this.createStream(deviceId)
-      return stream.then(s => this.addStream(new WithId(s, deviceId)))
+      const stream = this.createStream(device)
+      return stream.then(s => this.addStream(new WithId(s, device.deviceId)))
     } else {
-      return Promise.resolve(this.removeStreams(deviceId))
+      return Promise.resolve(this.removeStreams(device.deviceId))
     }
   }
 }

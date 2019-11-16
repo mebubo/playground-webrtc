@@ -2,36 +2,21 @@ import React from 'react'
 import { WithId } from '../utils'
 import { LocalMediaDevices, LocalMediaStreams } from '../localMedia'
 
-type VideoDeviceInfo = {
-    label: string
-    deviceId: string
-}
-
 type VideoDevicesProps = {
-    devices: Array<VideoDeviceInfo>
+    devices: Array<MediaDeviceInfo>
     activeStreamDeviceIds: Array<string>
-    cb: (deviceId: string, isOn: boolean) => void
+    cb: (deviceId: MediaDeviceInfo, isOn: boolean) => void
 }
 
 const VideoDevices: React.FunctionComponent<VideoDevicesProps> = ({ devices, cb, activeStreamDeviceIds }) => {
     return <ul>
-        {devices.map(({ label, deviceId }) => {
-            return <li key={deviceId}>
+        {devices.map(device => {
+            return <li key={device.deviceId}>
                 <input
                     type="checkbox"
-                    checked={activeStreamDeviceIds.includes(deviceId)}
+                    checked={activeStreamDeviceIds.includes(device.deviceId)}
                     name=""
-                    onChange={e => cb(deviceId, (e.target as any).checked)} /> {label}
-            </li>
-        })}
-    </ul>
-}
-
-const DisplayMedia: React.FunctionComponent<VideoDevicesProps> = ({ devices, cb }) => {
-    return <ul>
-        {devices.map(({ label, deviceId }, i) => {
-            return <li key={i}>
-                <input type="checkbox" name="" id="" onChange={e => cb(deviceId, (e.target as any).checked)} /> {label}
+                    onChange={e => cb(device, (e.target as any).checked)} /> {device.label}
             </li>
         })}
     </ul>
@@ -124,8 +109,8 @@ export class App extends React.Component<AppProps, AppState> {
                 {this.state.mediaDevices.map((d, i) => <li key={i}>{d.toString()}: {JSON.stringify(d)}</li>)}
             </ul>
             <VideoDevices
-                devices={this.state.mediaDevices.filter(d => d.kind === 'videoinput')}
-                cb={(deviceId, isOn) => this.localMediaStreams.toggleMediaStream(deviceId, isOn)}
+                devices={this.state.mediaDevices.filter(d => d.kind === 'videoinput' || d.kind === 'audioinput')}
+                cb={(device, isOn) => this.localMediaStreams.toggleMediaStream(device, isOn)}
                 activeStreamDeviceIds={this.state.mediaStreams.map(s => s.id)}
             />
             <VideoStreams streams={this.state.mediaStreams} />
