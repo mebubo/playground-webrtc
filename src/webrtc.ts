@@ -1,12 +1,12 @@
-import { LocalMedia } from './localMedia'
+import { LocalMediaStreams } from './localMedia'
 import { WithId } from './utils'
 
 export class WebRTC {
     pc: RTCPeerConnection
     senders: Array<RTCRtpSender> = []
 
-    constructor(private readonly localMedia: LocalMedia) {
-        localMedia.subscribeToMediaStreams((current, stopped) => this.handleStreams(current, stopped))
+    constructor(private readonly localMedia: LocalMediaStreams) {
+        localMedia.subscribe((current, stopped) => this.handleStreams(current, stopped))
         this.pc = new RTCPeerConnection
     }
 

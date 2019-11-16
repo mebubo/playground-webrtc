@@ -3,13 +3,11 @@ import { WithId } from "./utils"
 type Listener<A> = (values: Array<A>) => void
 type Listener2<A> = (values: Array<A>, values2: Array<A>) => void
 
-const x = { label: "Screen", deviceId: "Screen", kind: "videoinput", groupId: "screen" }
+const x = { label: "Screen", deviceId: "screen", kind: "videoinput", groupId: "screen" }
 const displayMediaDevice: MediaDeviceInfo = { ...x, toJSON: () => x } as MediaDeviceInfo
 
-export class LocalMedia {
-  mediaStreams: Array<WithId<MediaStream>> = []
+export class LocalMediaDevices {
   mediaDeviceListeners: Array<Listener<MediaDeviceInfo>> = []
-  mediaStreamListeners: Array<Listener2<WithId<MediaStream>>> = []
 
   constructor() {
     navigator.mediaDevices.ondevicechange = () => {
@@ -17,6 +15,24 @@ export class LocalMedia {
       devices.then(d => this.mediaDeviceListeners.forEach(listener => listener(d)))
     }
   }
+
+  getMediaDevices() {
+    return navigator.mediaDevices.enumerateDevices().then(d => [...d, displayMediaDevice])
+  }
+
+  subscribe(listner: (mediaDevices: Array<MediaDeviceInfo>) => void) {
+    this.mediaDeviceListeners.push(listner)
+    this.getMediaDevices().then(x => listner(x))
+    return () => {
+      this.mediaDeviceListeners = this.mediaDeviceListeners.filter(l => l !== listner)
+    }
+  }
+
+}
+
+export class LocalMediaStreams {
+  mediaStreams: Array<WithId<MediaStream>> = []
+  mediaStreamListeners: Array<Listener2<WithId<MediaStream>>> = []
 
   addStream(stream: WithId<MediaStream>) {
     this.mediaStreams = [...this.mediaStreams, stream]
@@ -31,19 +47,7 @@ export class LocalMedia {
     this.mediaStreamListeners.forEach(listener => listener(this.mediaStreams, streamsToStop))
   }
 
-  getMediaDevices() {
-    return navigator.mediaDevices.enumerateDevices().then(d => [...d, displayMediaDevice])
-  }
-
-  subscribeToMediaDevices(listner: (mediaDevices: Array<MediaDeviceInfo>) => void) {
-    this.mediaDeviceListeners.push(listner)
-    this.getMediaDevices().then(x => listner(x))
-    return () => {
-      this.mediaDeviceListeners = this.mediaDeviceListeners.filter(l => l !== listner)
-    }
-  }
-
-  subscribeToMediaStreams(listner: Listener2<WithId<MediaStream>>) {
+  subscribe(listner: Listener2<WithId<MediaStream>>) {
     this.mediaStreamListeners.push(listner)
     listner(this.mediaStreams, [])
     return () => {

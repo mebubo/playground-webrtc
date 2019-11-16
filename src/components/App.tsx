@@ -1,6 +1,6 @@
 import React from 'react'
 import { WithId } from '../utils'
-import { LocalMedia } from '../localMedia'
+import { LocalMediaDevices, LocalMediaStreams } from '../localMedia'
 
 type VideoDeviceInfo = {
     label: string
@@ -92,20 +92,25 @@ const initialState: AppState = {
     mediaStreams: []
 }
 
-type AppProps = { localMedia: LocalMedia }
+type AppProps = {
+    localMediaDevices: LocalMediaDevices
+    localMediaStreams: LocalMediaStreams
+}
 
 export class App extends React.Component<AppProps, AppState> {
-    localMedia: LocalMedia
+    localMediaDevices: LocalMediaDevices
+    localMediaStreams: LocalMediaStreams
     subscriptions: Array<() => void> = []
     constructor(props: AppProps) {
         super(props)
         this.state = initialState
-        this.localMedia = props.localMedia
+        this.localMediaDevices = props.localMediaDevices
+        this.localMediaStreams = props.localMediaStreams
     }
 
     componentDidMount() {
-        this.subscriptions.push(this.localMedia.subscribeToMediaDevices(mediaDevices => this.setState({ mediaDevices })))
-        this.subscriptions.push(this.localMedia.subscribeToMediaStreams((mediaStreams, _) => this.setState({ mediaStreams })))
+        this.subscriptions.push(this.localMediaDevices.subscribe(mediaDevices => this.setState({ mediaDevices })))
+        this.subscriptions.push(this.localMediaStreams.subscribe((mediaStreams, _) => this.setState({ mediaStreams })))
     }
 
     componentWillUnmount() {
@@ -120,7 +125,7 @@ export class App extends React.Component<AppProps, AppState> {
             </ul>
             <VideoDevices
                 devices={this.state.mediaDevices.filter(d => d.kind === 'videoinput')}
-                cb={(deviceId, isOn) => this.localMedia.toggleMediaStream(deviceId, isOn)}
+                cb={(deviceId, isOn) => this.localMediaStreams.toggleMediaStream(deviceId, isOn)}
                 activeStreamDeviceIds={this.state.mediaStreams.map(s => s.id)}
             />
             <VideoStreams streams={this.state.mediaStreams} />

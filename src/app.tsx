@@ -1,18 +1,18 @@
 import ReactDOM from 'react-dom'
 import React from 'react'
 import { App, VideoStreams } from './components/App'
-import { LocalMedia } from './localMedia'
+import { LocalMediaStreams, LocalMediaDevices } from './localMedia'
 import { WebRTC } from './webrtc'
 import { WithId } from './utils'
 
 export const runApp = () => {
-    const localMedia = new LocalMedia;
-    (window as any).localMedia = localMedia
+    const localMediaDevices = new LocalMediaDevices;
+    const localMediaStreams = new LocalMediaStreams;
     ReactDOM.render(
-        <App localMedia={localMedia} />,
+        <App localMediaDevices={localMediaDevices} localMediaStreams={localMediaStreams} />,
         document.getElementById("app")
     );
-    const webrtc = new WebRTC(localMedia)
+    const webrtc = new WebRTC(localMediaStreams)
 
     const pc1 = webrtc.pc
     const pc2 = new RTCPeerConnection
