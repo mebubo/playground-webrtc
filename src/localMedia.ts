@@ -4,13 +4,13 @@ type Listener<A> = (values: Array<A>) => void
 type Listener2<A> = (values: Array<A>, values2: Array<A>) => void
 
 class DisplayMediaDeviceInfo implements MediaDeviceInfo {
- label = "Screen"
- deviceId = "screen"
- kind = "videoinput" as MediaDeviceKind
- groupId = "screen"
- toJSON() {
-   return this
- }
+  label = "Screen"
+  deviceId = "screen"
+  kind: MediaDeviceKind = "videoinput"
+  groupId = "screen"
+  toJSON() {
+    return this
+  }
 }
 
 const DISPLAY_MEDIA_DEVICE = new DisplayMediaDeviceInfo

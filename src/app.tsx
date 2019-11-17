@@ -6,13 +6,13 @@ import { WebRTC } from './webrtc'
 import { WithId } from './utils'
 
 export const runApp = () => {
-    const localMediaDevices = new LocalMediaDevices;
-    const localMediaStreams = new LocalMediaStreams;
+    const localMediaDevices = new LocalMediaDevices
+    const localMediaStreams = new LocalMediaStreams
     ReactDOM.render(
         <App localMediaDevices={localMediaDevices} localMediaStreams={localMediaStreams} />,
         document.getElementById("app")
     );
-    const webrtc = new WebRTC(localMediaStreams)
+    const webrtc = new WebRTC(localMediaStreams, null as any)
 
     const pc1 = webrtc.pc
     const pc2 = new RTCPeerConnection
