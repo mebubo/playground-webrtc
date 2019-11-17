@@ -5,7 +5,7 @@ import { LocalMediaDevices, LocalMediaStreams } from '../localMedia'
 type VideoDevicesProps = {
     devices: Array<MediaDeviceInfo>
     activeStreamDeviceIds: Array<string>
-    cb: (deviceId: MediaDeviceInfo, isOn: boolean) => void
+    cb: (device: MediaDeviceInfo, isOn: boolean) => void
 }
 
 const VideoDevices: React.FunctionComponent<VideoDevicesProps> = ({ devices, cb, activeStreamDeviceIds }) => {
