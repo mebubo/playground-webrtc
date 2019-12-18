@@ -83,19 +83,15 @@ type AppProps = {
 }
 
 export class App extends React.Component<AppProps, AppState> {
-    localMediaDevices: LocalMediaDevices
-    localMediaStreams: LocalMediaStreams
     subscriptions: Array<() => void> = []
     constructor(props: AppProps) {
         super(props)
         this.state = initialState
-        this.localMediaDevices = props.localMediaDevices
-        this.localMediaStreams = props.localMediaStreams
     }
 
     componentDidMount() {
-        this.subscriptions.push(this.localMediaDevices.subscribe(mediaDevices => this.setState({ mediaDevices })))
-        this.subscriptions.push(this.localMediaStreams.subscribe((mediaStreams, _) => this.setState({ mediaStreams })))
+        this.subscriptions.push(this.props.localMediaDevices.subscribe(mediaDevices => this.setState({ mediaDevices })))
+        this.subscriptions.push(this.props.localMediaStreams.subscribe((mediaStreams, _) => this.setState({ mediaStreams })))
     }
 
     componentWillUnmount() {
@@ -104,13 +100,12 @@ export class App extends React.Component<AppProps, AppState> {
 
     render() {
         return <div>
-            Hello
             <ul>
                 {this.state.mediaDevices.map((d, i) => <li key={i}>{d.toString()}: {JSON.stringify(d)}</li>)}
             </ul>
             <VideoDevices
                 devices={this.state.mediaDevices.filter(d => d.kind === 'videoinput' || d.kind === 'audioinput')}
-                cb={(device, isOn) => this.localMediaStreams.toggleMediaStream(device, isOn)}
+                cb={(device, isOn) => this.props.localMediaStreams.toggleMediaStream(device, isOn)}
                 activeStreamDeviceIds={this.state.mediaStreams.map(s => s.id)}
             />
             <VideoStreams streams={this.state.mediaStreams} />
