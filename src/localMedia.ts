@@ -45,7 +45,9 @@ export class LocalMediaStreams {
 
   addStream(stream: WithId<MediaStream>) {
     this.mediaStreams = [...this.mediaStreams, stream]
-    this.mediaStreamListeners.forEach(listener => listener(this.mediaStreams, []))
+    this.mediaStreamListeners.forEach(listener => listener(this.mediaStreams, []));
+    (window as any).mediaStreams = this.mediaStreams;
+    (window as any).videoTrack = this.mediaStreams[0].value.getVideoTracks()[0]
   }
 
   removeStreams(deviceId: string) {
