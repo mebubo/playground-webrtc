@@ -40,7 +40,7 @@ module.exports = {
     devServer: {
         contentBase: path.join(__dirname, 'static'),
         compress: true,
-        port: 1234
+        port: 1235
     }
 
 };
